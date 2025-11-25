@@ -1,10 +1,41 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons'; 
-import { useRouter } from 'expo-router'; 
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function WelcomeScreen() {
-  const router = useRouter(); 
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = async () => {
+    try {
+      const token = await AsyncStorage.getItem('unistudious_user_token');
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      const userRole = await AsyncStorage.getItem('userRole');
+
+      if (token && userData) {
+        // User is already logged in, redirect to appropriate dashboard
+        const user = JSON.parse(userData);
+        
+        if (userRole === 'admin' || user.role === 'admin') {
+          router.replace('/(tabs)/adminHome');
+        } else if (userRole === 'prof') {
+          router.replace('/(tabs)/profHome');
+        } else {
+          router.replace('/(tabs)/home');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
 
   const goToSignUp = () => {
     router.push('/(auth)/studentRegister'); 
@@ -13,6 +44,15 @@ export default function WelcomeScreen() {
   const goToLogin = () => {
     router.push('/(auth)/studentLogin'); 
   };
+
+  if (isCheckingAuth) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#5B43D5" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Chargement...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

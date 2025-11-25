@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-// Assurez-vous d'avoir une fonction 'loginUserApi' dans ce fichier
-import { loginUserApi } from '../../services/api'; 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loginProfApi } from '../../services/api'; 
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const StudentLoginScreen = () => {
+const ProfLoginScreen = () => {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // État pour "Se souvenir de moi"
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const goBack = () => {
-    router.replace('/');
+    router.replace('/(auth)/studentLogin');
   };
 
   const handleLogin = async () => {
@@ -28,25 +27,21 @@ const StudentLoginScreen = () => {
     setIsLoading(true);
 
     try {
-      // Call Student/Admin Login API
-      const data = await loginUserApi(email, password);
+      // Call Professor Login API
+      const data = await loginProfApi(email, password);
 
       // Store token and user data
       await AsyncStorage.setItem('unistudious_user_token', data.token);
       await AsyncStorage.setItem('unistudious_user_data', JSON.stringify(data.user));
-      await AsyncStorage.setItem('userRole', data.user.role || 'user');
+      await AsyncStorage.setItem('userRole', 'prof');
       
-      Alert.alert("Succès", `Connexion réussie. Bienvenue, ${data.user.username} !`);
+      Alert.alert("Succès", `Bienvenue, Professeur ${data.user.firstName} ${data.user.lastName} !`);
       
-      // Redirect based on role
-      if (data.user.role === 'admin') {
-        router.replace('/(tabs)/adminHome');
-      } else {
-        router.replace('/(tabs)/home'); // Student home
-      }
+      // Redirect to Professor Dashboard
+      router.replace('/(tabs)/profHome'); 
 
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "E-mail ou mot de passe incorrect. Veuillez réessayer.";
+      const errorMessage = error.response?.data?.message || "E-mail ou mot de passe incorrect.";
       Alert.alert("Échec de la connexion", errorMessage);
       console.error("Erreur de connexion:", error.response || error.message);
     } finally {
@@ -54,22 +49,12 @@ const StudentLoginScreen = () => {
     }
   };
   
-  const goToSignUp = () => {
-    router.replace('/(auth)/studentRegister'); 
+  const goToStudentLogin = () => {
+    router.replace('/(auth)/studentLogin'); 
   };
   
   const goToForgotPassword = () => {
     Alert.alert("Fonctionnalité future", "Redirection vers la récupération de mot de passe.");
-  };
-
-  const goToTeacherLogin = () => {
-      // Redirection vers l'écran de connexion des professeurs
-      router.push('/(auth)/profLogin');
-  };
-
-  const goToAdminLogin = () => {
-      // Redirection vers l'écran de connexion admin
-      router.push('/(auth)/adminLogin');
   };
 
   return (
@@ -78,18 +63,23 @@ const StudentLoginScreen = () => {
         <TouchableOpacity onPress={goBack} disabled={isLoading} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Connexion</Text>
+        <Text style={styles.headerTitle}>Connexion Professeur</Text>
       </View>
       
       <View style={styles.container}>
-        <Text style={styles.welcomeText}>Bienvenue ! Connectez-vous pour continuer</Text>
+        <View style={styles.iconContainer}>
+          <Ionicons name="school" size={80} color="#FF6B35" />
+        </View>
+        
+        <Text style={styles.welcomeText}>Espace Professeur</Text>
+        <Text style={styles.subText}>Connectez-vous pour gérer vos cours</Text>
 
-        {/* Champ E-mail avec icône */}
+        {/* Champ E-mail */}
         <View style={styles.inputContainer}>
           <Ionicons name="mail-outline" size={24} color="#666" style={styles.inputIcon} />
           <TextInput 
             style={styles.input} 
-            placeholder="Email" 
+            placeholder="Email professionnel" 
             value={email} 
             onChangeText={setEmail} 
             keyboardType="email-address" 
@@ -98,7 +88,7 @@ const StudentLoginScreen = () => {
           />
         </View>
         
-        {/* Champ Mot de passe avec icône et bouton de visibilité */}
+        {/* Champ Mot de passe */}
         <View style={styles.inputContainer}>
           <Ionicons name="lock-closed-outline" size={24} color="#666" style={styles.inputIcon} />
           <TextInput 
@@ -117,12 +107,12 @@ const StudentLoginScreen = () => {
             <Ionicons 
               name={passwordVisible ? "eye-off-outline" : "eye-outline"} 
               size={24} 
-              color="#5B43D5" 
+              color="#FF6B35" 
             />
           </TouchableOpacity>
         </View>
 
-        {/* Se souvenir de moi / Mot de passe oublié */}
+        {/* Options */}
         <View style={styles.optionsContainer}>
             <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)} disabled={isLoading}>
                 <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
@@ -149,49 +139,27 @@ const StudentLoginScreen = () => {
           )}
         </TouchableOpacity>
         
-        {/* Section Accès spécial */}
-        <Text style={styles.specialAccessText}>Accès spécial</Text>
-        <View style={styles.specialButtonsContainer}>
-          <TouchableOpacity 
-              style={styles.secondaryButton} 
-              onPress={goToTeacherLogin}
-              disabled={isLoading}
-          >
-            <Ionicons name="school" size={20} color="#FF6B35" style={{ marginRight: 5 }} />
-            <Text style={styles.secondaryButtonText}>Professeur</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-              style={[styles.secondaryButton, styles.adminButton]} 
-              onPress={goToAdminLogin}
-              disabled={isLoading}
-          >
-            <Ionicons name="shield-checkmark" size={20} color="#DC143C" style={{ marginRight: 5 }} />
-            <Text style={[styles.secondaryButtonText, styles.adminButtonText]}>Admin</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Lien Inscription */}
-        <View style={styles.linkContainer}>
-          <Text style={styles.textBase}>Vous n avez pas de compte ? </Text>
-          <TouchableOpacity onPress={goToSignUp} disabled={isLoading}>
-            <Text style={styles.linkText}>S inscrire</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Lien vers Student Login */}
+        <Text style={styles.specialAccessText}>Vous êtes étudiant ?</Text>
+        <TouchableOpacity 
+            style={styles.secondaryButton} 
+            onPress={goToStudentLogin}
+            disabled={isLoading}
+        >
+          <Text style={styles.secondaryButtonText}>Connexion Étudiant</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
 
-
 const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1, backgroundColor: '#FFFFFF' },
-  // Header pour la flèche de retour et le titre "Connexion"
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingTop: 50, // Ajustement pour la barre de statut
+    paddingTop: 50,
     paddingBottom: 15,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
@@ -206,20 +174,23 @@ const styles = StyleSheet.create({
       color: '#333',
   },
   
-  container: { flex: 1, paddingHorizontal: 30, alignItems: 'center', paddingTop: 30 },
-  welcomeText: { fontSize: 16, color: '#666', marginBottom: 30, textAlign: 'center' },
+  container: { flex: 1, paddingHorizontal: 30, alignItems: 'center', paddingTop: 20 },
+  iconContainer: {
+    marginBottom: 20,
+  },
+  welcomeText: { fontSize: 24, fontWeight: '700', color: '#333', marginBottom: 5 },
+  subText: { fontSize: 14, color: '#666', marginBottom: 30, textAlign: 'center' },
   
-  // Conteneur d'entrée avec icône
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
     height: 55,
-    backgroundColor: '#FFFFFF', // Fond blanc pour l'entrée
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: '#D0D0D0', // Bordure claire
+    borderColor: '#D0D0D0',
     marginBottom: 15,
   },
   inputIcon: {
@@ -231,7 +202,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   
-  // Style spécifique pour le champ de mot de passe dans son conteneur
   passwordInput: {
     flex: 1,
     fontSize: 16,
@@ -243,7 +213,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   
-  // Conteneur "Se souvenir de moi" et "Mot de passe oublié"
   optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -253,7 +222,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 
-  // Styles de la case à cocher
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -263,76 +231,59 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: '#5B43D5',
+    borderColor: '#FF6B35',
     marginRight: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#5B43D5',
-    borderColor: '#5B43D5',
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
   },
   
-  // Styles du bouton principal "Se connecter"
   primaryButton: {
     width: '100%',
     paddingVertical: 18,
     borderRadius: 15, 
     alignItems: 'center',
-    backgroundColor: '#5B43D5', // Violet
+    backgroundColor: '#FF6B35', // Orange for professors
     marginBottom: 30,
-    elevation: 5, // Ombre Android
+    elevation: 5,
   },
   primaryButtonDisabled: {
-    backgroundColor: '#A092D8',
+    backgroundColor: '#FFB399',
   },
   primaryButtonText: { color: 'white', fontSize: 18, fontWeight: '700' },
   
-  // Section Accès Spécial
   specialAccessText: { 
       fontSize: 14, 
       color: '#999', 
       marginBottom: 15,
       marginTop: 15,
   },
-  specialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 40,
-  },
   secondaryButton: {
-    flex: 1,
-    marginHorizontal: 5,
+    width: '60%',
     paddingVertical: 14,
     borderRadius: 30,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#FFFFFF', 
     borderWidth: 1,
     borderColor: '#FF6B35',
-  },
-  adminButton: {
-    borderColor: '#DC143C',
+    marginBottom: 40,
   },
   secondaryButtonText: { 
       color: '#FF6B35', 
-      fontSize: 14, 
+      fontSize: 16, 
       fontWeight: '600' 
   },
-  adminButtonText: {
-    color: '#DC143C',
-  },
   
-  // Styles du lien d'inscription
-  linkContainer: { flexDirection: 'row', alignItems: 'center' },
   textBase: { fontSize: 15, color: '#666' },
   linkText: { 
-    color: '#5B43D5', 
+    color: '#FF6B35', 
     fontSize: 15, 
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });
-export default StudentLoginScreen;
+
+export default ProfLoginScreen;

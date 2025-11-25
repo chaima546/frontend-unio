@@ -111,7 +111,7 @@ const StudentSignUpScreen = () => {
       Alert.alert("Succès", `Bienvenue ${data.user.username} ! Vous pouvez maintenant vous connecter.`);
       
       // Redirection vers la page de connexion
-      router.replace('/(auth)/studentLogin'); 
+      router.push('/(auth)/studentLogin'); 
 
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Erreur réseau. Impossible de créer le compte.";
@@ -123,7 +123,7 @@ const StudentSignUpScreen = () => {
   };
   
   const goToLogin = () => {
-    router.replace('/(auth)/studentLogin'); 
+    router.push('/(auth)/studentLogin'); 
   };
   
   // Condition de rendu pour le sélecteur de section
