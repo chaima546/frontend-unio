@@ -16,18 +16,20 @@ export default function WelcomeScreen() {
     try {
       const token = await AsyncStorage.getItem('unistudious_user_token');
       const userData = await AsyncStorage.getItem('unistudious_user_data');
-      const userRole = await AsyncStorage.getItem('userRole');
 
       if (token && userData) {
         // User is already logged in, redirect to appropriate dashboard
         const user = JSON.parse(userData);
         
-        if (userRole === 'admin' || user.role === 'admin') {
+        if (user.role === 'admin') {
           router.replace('/(tabs)/adminHome');
-        } else if (userRole === 'prof') {
+        } else if (user.role === 'prof') {
           router.replace('/(tabs)/profHome');
-        } else {
+        } else if (user.role === 'user') {
           router.replace('/(tabs)/home');
+        } else {
+          // Unknown role, clear storage and stay on welcome screen
+          await AsyncStorage.clear();
         }
       }
     } catch (error) {

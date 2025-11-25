@@ -17,13 +17,13 @@ router.get("/", protect, getCourses);        // Tous les cours pour admin, cours
 router.get("/my-courses", protect, getCourses); // Cours de l'utilisateur
 router.get("/:id", protect, getCourseById); // Cours spécifique
 
-// Routes Admin/Prof
-router.post("/admin", protect, createCourse);
-router.put("/:id", protect, updateCourse);
-router.delete("/:id", protect, deleteCourse);
+// Routes Admin/Prof only (Students have read-only access via GET routes above)
+router.post("/admin", protect, createCourse);                            // Prof/Admin only
+router.put("/:id", protect, updateCourse);                                // Prof/Admin only
+router.delete("/:id", protect, deleteCourse);                             // Prof/Admin only
 
-// Student assignment routes (Prof or Admin)
-router.post("/:id/assign-students", protect, assignStudentsToCourse);
-router.post("/:id/remove-students", protect, removeStudentsFromCourse);
+// Student assignment routes (Prof/Admin only)
+router.post("/:id/assign-students", protect, assignStudentsToCourse);    // Prof/Admin only
+router.post("/:id/remove-students", protect, removeStudentsFromCourse);  // Prof/Admin only
 
 export default router;

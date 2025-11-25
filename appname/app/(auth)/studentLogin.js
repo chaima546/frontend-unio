@@ -34,13 +34,14 @@ const StudentLoginScreen = () => {
       // Store token and user data
       await AsyncStorage.setItem('unistudious_user_token', data.token);
       await AsyncStorage.setItem('unistudious_user_data', JSON.stringify(data.user));
-      await AsyncStorage.setItem('userRole', data.user.role || 'user');
       
       Alert.alert("Succès", `Connexion réussie. Bienvenue, ${data.user.username} !`);
       
       // Redirect based on role
       if (data.user.role === 'admin') {
         router.replace('/(tabs)/adminHome');
+      } else if (data.user.role === 'prof') {
+        router.replace('/(tabs)/profHome');
       } else {
         router.replace('/(tabs)/home'); // Student home
       }

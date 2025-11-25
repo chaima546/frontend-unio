@@ -34,13 +34,23 @@ const AdminHomeScreen = () => {
       const userData = await AsyncStorage.getItem('unistudious_user_data');
       if (userData) {
         const parsedUser = JSON.parse(userData);
+        // Redirect based on role
+        if (parsedUser.role === 'user') {
+          router.replace('/(tabs)/home');
+          return;
+        }
+        if (parsedUser.role === 'prof') {
+          router.replace('/(tabs)/profHome');
+          return;
+        }
+        // Only allow admins
         if (parsedUser.role !== 'admin') {
           router.replace('/(auth)/studentLogin');
           return;
         }
         setUser(parsedUser);
       } else {
-        router.replace('/(auth)/adminLogin');
+        router.replace('/(auth)/studentLogin');
       }
     } catch (error) {
       console.error('Error loading user data:', error);

@@ -11,6 +11,7 @@ import {
 
 // ✅ Inscription et Connexion
 router.post("/", registerProf);     // POST /api/profs
+
 router.post("/login", authProf);    // POST /api/profs/login
 
 // ✅ CRUD des profs

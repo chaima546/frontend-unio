@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllCoursesApi, deleteCourseApi } from '../../../services/api';
+
+const { width, height } = Dimensions.get('window');
 
 const CoursesListScreen = () => {
   const router = useRouter();
@@ -25,9 +27,12 @@ const CoursesListScreen = () => {
 
   const loadUserRole = async () => {
     try {
-      const role = await AsyncStorage.getItem('userRole');
-      console.log('📌 User Role Loaded:', role);
-      setUserRole(role);
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        console.log('📌 User Role Loaded:', user.role);
+        setUserRole(user.role);
+      }
     } catch (error) {
       console.error('Error loading user role:', error);
     }
@@ -91,7 +96,8 @@ const CoursesListScreen = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#5B43D5" />
+        <ActivityIndicator size="large" color="#6C5CE7" />
+        <Text style={styles.loadingText}>Chargement des cours...</Text>
       </View>
     );
   }
@@ -109,13 +115,23 @@ const CoursesListScreen = () => {
         }} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tous les Cours</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(screens)/courses/create')}
-          style={styles.addButton}
-        >
-          <Ionicons name="add-circle" size={28} color="#5B43D5" />
-        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Mes Cours</Text>
+          {courses.length > 0 && (
+            <View style={styles.courseBadge}>
+              <Text style={styles.courseBadgeText}>{courses.length}</Text>
+            </View>
+          )}
+        </View>
+        {userRole !== 'user' && (
+          <TouchableOpacity
+            onPress={() => router.push('/(screens)/courses/create')}
+            style={styles.addButton}
+          >
+            <Ionicons name="add-circle" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+        {userRole === 'user' && <View style={{ width: 28 }} />}
       </View>
 
       <ScrollView
@@ -126,14 +142,20 @@ const CoursesListScreen = () => {
       >
         {courses.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={64} color="#CCC" />
-            <Text style={styles.emptyText}>Aucun cours disponible</Text>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => router.push('/(screens)/courses/create')}
-            >
-              <Text style={styles.createButtonText}>Créer un cours</Text>
-            </TouchableOpacity>
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="book-outline" size={80} color="#6C5CE7" />
+            </View>
+            <Text style={styles.emptyTitle}>Aucun cours disponible</Text>
+            <Text style={styles.emptySubtitle}>Les cours apparaîtront ici une fois ajoutés</Text>
+            {userRole !== 'user' && (
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => router.push('/(screens)/courses/create')}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.createButtonText}>Créer un cours</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           courses.map((course) => (
@@ -141,7 +163,12 @@ const CoursesListScreen = () => {
               key={course._id}
               style={styles.courseCard}
               onPress={() => handleViewDetails(course)}
+              activeOpacity={0.7}
             >
+              <View style={styles.courseIconBadge}>
+                <Ionicons name="book" size={24} color="#6C5CE7" />
+              </View>
+              
               <View style={styles.courseHeader}>
                 <View style={styles.courseInfo}>
                   <Text style={styles.courseName}>{course.name}</Text>
@@ -150,13 +177,13 @@ const CoursesListScreen = () => {
                   </Text>
                   <View style={styles.courseStats}>
                     <View style={styles.statItem}>
-                      <Ionicons name="people" size={16} color="#666" />
+                      <Ionicons name="people" size={16} color="#6C5CE7" />
                       <Text style={styles.statText}>
                         {course.students?.length || 0} étudiants
                       </Text>
                     </View>
                     <View style={styles.statItem}>
-                      <Ionicons name="person" size={16} color="#666" />
+                      <Ionicons name="person" size={16} color="#FFA502" />
                       <Text style={styles.statText}>
                         {course.teacher?.firstName || 'Prof'} {course.teacher?.lastName || ''}
                       </Text>
@@ -165,15 +192,10 @@ const CoursesListScreen = () => {
                 </View>
 
                 <View style={styles.progressContainer}>
-                  <Text style={styles.progressText}>{course.progress || 0}%</Text>
-                  <View style={styles.progressBar}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        { width: `${course.progress || 0}%` },
-                      ]}
-                    />
+                  <View style={styles.circularProgress}>
+                    <Text style={styles.progressText}>{course.progress || 0}%</Text>
                   </View>
+                  <Text style={styles.progressLabel}>Progression</Text>
                 </View>
               </View>
 
@@ -181,17 +203,23 @@ const CoursesListScreen = () => {
                 <View style={styles.courseActions}>
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => handleEdit(course)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleEdit(course);
+                    }}
                   >
-                    <Ionicons name="create-outline" size={20} color="#5B43D5" />
+                    <Ionicons name="create-outline" size={20} color="#6C5CE7" />
                     <Text style={styles.actionButtonText}>Modifier</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[styles.actionButton, styles.deleteButton]}
-                    onPress={() => handleDelete(course._id, course.name)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDelete(course._id, course.name);
+                    }}
                   >
-                    <Ionicons name="trash-outline" size={20} color="#DC143C" />
+                    <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
                     <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
                       Supprimer
                     </Text>
@@ -209,13 +237,19 @@ const CoursesListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#636E72',
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -223,73 +257,147 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 50,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#6C5CE7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
-    padding: 5,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  courseBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 32,
+    alignItems: 'center',
+  },
+  courseBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
-    color: '#333',
   },
   addButton: {
-    padding: 5,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
   },
   content: {
     flex: 1,
-    padding: 15,
+    padding: 20,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    paddingTop: 80,
+    paddingHorizontal: 40,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#999',
-    marginTop: 20,
-    marginBottom: 30,
+  emptyIconContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#F0EBFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: '#636E72',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
   },
   createButton: {
-    backgroundColor: '#5B43D5',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6C5CE7',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
     borderRadius: 25,
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+    gap: 8,
   },
   createButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   courseCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 2,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    marginHorizontal: 2,
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6C5CE7',
+  },
+  courseIconBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0EBFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
   courseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 16,
+    alignItems: 'flex-start',
   },
   courseInfo: {
     flex: 1,
-    marginRight: 15,
+    marginRight: 16,
   },
   courseName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 5,
+    fontSize: Math.min(width * 0.045, 20),
+    fontWeight: '800',
+    color: '#2D3436',
+    marginBottom: 6,
+    lineHeight: 24,
   },
   courseDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: Math.min(width * 0.036, 15),
+    color: '#636E72',
+    marginBottom: 12,
+    lineHeight: 20,
   },
   courseStats: {
     flexDirection: 'row',
@@ -302,59 +410,64 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    color: '#666',
+    color: '#636E72',
+    fontWeight: '500',
   },
   progressContainer: {
     alignItems: 'center',
-    minWidth: 60,
+    minWidth: 70,
   },
-  progressText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#5B43D5',
-    marginBottom: 5,
-  },
-  progressBar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#E0E0E0',
+  circularProgress: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F0EBFF',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#6C5CE7',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#5B43D5',
+  progressText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#6C5CE7',
+  },
+  progressLabel: {
+    fontSize: 11,
+    color: '#636E72',
+    marginTop: 6,
+    fontWeight: '600',
   },
   courseActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
-    paddingTop: 15,
+    paddingTop: 16,
+    marginTop: 4,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#F0F0FF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#F0EBFF',
     flex: 1,
     marginHorizontal: 5,
     justifyContent: 'center',
+    gap: 6,
   },
   actionButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#5B43D5',
-    marginLeft: 5,
+    fontWeight: '700',
+    color: '#6C5CE7',
   },
   deleteButton: {
-    backgroundColor: '#FFE0E0',
+    backgroundColor: '#FFF0F0',
   },
   deleteButtonText: {
-    color: '#DC143C',
+    color: '#FF6B6B',
   },
 });
 

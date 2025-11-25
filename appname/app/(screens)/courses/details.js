@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCourseByIdApi } from '../../../services/api';
+
+const { width } = Dimensions.get('window');
 
 export default function CourseDetails() {
   const router = useRouter();
@@ -27,8 +30,11 @@ export default function CourseDetails() {
 
   const loadUserRole = async () => {
     try {
-      const role = await AsyncStorage.getItem('userRole');
-      setUserRole(role);
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.role);
+      }
     } catch (error) {
       console.error('Error loading user role:', error);
     }
@@ -64,7 +70,8 @@ export default function CourseDetails() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#5B43D5" />
+        <ActivityIndicator size="large" color="#6C5CE7" />
+        <Text style={styles.loadingText}>Chargement du cours...</Text>
       </View>
     );
   }
@@ -72,10 +79,14 @@ export default function CourseDetails() {
   if (!course) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={64} color="#999" />
-        <Text style={styles.errorText}>Course not found</Text>
+        <View style={styles.errorIconContainer}>
+          <Ionicons name="alert-circle-outline" size={80} color="#FF6B6B" />
+        </View>
+        <Text style={styles.errorTitle}>Cours introuvable</Text>
+        <Text style={styles.errorText}>Ce cours n'existe pas ou a été supprimé</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Ionicons name="arrow-back" size={20} color="#FFF" />
+          <Text style={styles.backButtonText}>Retour</Text>
         </TouchableOpacity>
       </View>
     );
@@ -86,63 +97,78 @@ export default function CourseDetails() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Course Details</Text>
+        <Text style={styles.headerTitle}>Détails du Cours</Text>
         {(userRole === 'admin' || userRole === 'prof') && (
           <TouchableOpacity onPress={handleEdit} style={styles.editBtn}>
-            <Ionicons name="create-outline" size={24} color="#5B43D5" />
+            <Ionicons name="create-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         )}
+        {userRole === 'user' && <View style={{ width: 40 }} />}
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Course Name */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Course Name</Text>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <View style={styles.courseIconLarge}>
+            <Ionicons name="book" size={40} color="#6C5CE7" />
+          </View>
           <Text style={styles.courseName}>{course.name}</Text>
+          
+          {/* Circular Progress */}
+          <View style={styles.circularProgressLarge}>
+            <View style={styles.progressCircle}>
+              <Text style={styles.progressPercentage}>{course.progress || 0}%</Text>
+              <Text style={styles.progressLabel}>Complété</Text>
+            </View>
+          </View>
         </View>
 
         {/* Description */}
         {course.description && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
+            <View style={styles.sectionIconHeader}>
+              <Ionicons name="document-text" size={20} color="#6C5CE7" />
+              <Text style={styles.sectionTitle}>Description</Text>
+            </View>
             <Text style={styles.descriptionText}>{course.description}</Text>
           </View>
         )}
 
-        {/* Progress */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Progress</Text>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${course.progress || 0}%` }]} />
-            </View>
-            <Text style={styles.progressText}>{course.progress || 0}%</Text>
-          </View>
-        </View>
-
         {/* Next Lesson */}
         {course.nextLesson && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Next Lesson</Text>
-            <Text style={styles.nextLessonText}>{course.nextLesson}</Text>
+            <View style={styles.sectionIconHeader}>
+              <Ionicons name="play-circle" size={20} color="#FFA502" />
+              <Text style={styles.sectionTitle}>Prochaine Leçon</Text>
+            </View>
+            <View style={styles.nextLessonCard}>
+              <Ionicons name="videocam" size={24} color="#FFA502" />
+              <Text style={styles.nextLessonText}>{course.nextLesson}</Text>
+            </View>
           </View>
         )}
 
         {/* Teacher */}
         {course.teacher && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Teacher</Text>
+            <View style={styles.sectionIconHeader}>
+              <Ionicons name="person" size={20} color="#6C5CE7" />
+              <Text style={styles.sectionTitle}>Professeur</Text>
+            </View>
             <View style={styles.teacherCard}>
               <View style={styles.teacherIcon}>
-                <Ionicons name="person" size={24} color="#5B43D5" />
+                <Ionicons name="person" size={28} color="#6C5CE7" />
               </View>
               <View style={styles.teacherInfo}>
                 <Text style={styles.teacherName}>
                   {course.teacher.firstName} {course.teacher.lastName}
                 </Text>
-                <Text style={styles.teacherEmail}>{course.teacher.email}</Text>
+                <View style={styles.teacherEmailRow}>
+                  <Ionicons name="mail" size={14} color="#636E72" />
+                  <Text style={styles.teacherEmail}>{course.teacher.email}</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -152,19 +178,25 @@ export default function CourseDetails() {
         {course.students && course.students.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                Students ({course.students.length})
-              </Text>
-              {(userRole === 'admin' || userRole === 'prof') && (
-                <TouchableOpacity 
-                  style={styles.manageButton}
-                  onPress={handleManageStudents}
-                >
-                  <Ionicons name="settings-outline" size={20} color="#5B43D5" />
-                  <Text style={styles.manageButtonText}>Manage</Text>
-                </TouchableOpacity>
-              )}
+              <View style={styles.sectionIconHeader}>
+                <Ionicons name="people" size={20} color="#6C5CE7" />
+                <Text style={styles.sectionTitle}>
+                  Étudiants
+                </Text>
+              </View>
+              <View style={styles.studentBadge}>
+                <Text style={styles.studentBadgeText}>{course.students.length}</Text>
+              </View>
             </View>
+            {(userRole === 'admin' || userRole === 'prof') && (
+              <TouchableOpacity 
+                style={styles.manageButton}
+                onPress={handleManageStudents}
+              >
+                <Ionicons name="settings-outline" size={20} color="#6C5CE7" />
+                <Text style={styles.manageButtonText}>Gérer les étudiants</Text>
+              </TouchableOpacity>
+            )}
             {course.students.slice(0, 5).map((student, index) => (
               <View key={student._id || index} style={styles.studentCard}>
                 <View style={styles.studentIcon}>
@@ -194,18 +226,41 @@ export default function CourseDetails() {
 
         {/* Metadata */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Information</Text>
-          <View style={styles.metadataRow}>
-            <Ionicons name="calendar-outline" size={18} color="#666" />
-            <Text style={styles.metadataText}>
-              Created: {new Date(course.createdAt).toLocaleDateString()}
-            </Text>
+          <View style={styles.sectionIconHeader}>
+            <Ionicons name="information-circle" size={20} color="#6C5CE7" />
+            <Text style={styles.sectionTitle}>Informations</Text>
           </View>
-          <View style={styles.metadataRow}>
-            <Ionicons name="time-outline" size={18} color="#666" />
-            <Text style={styles.metadataText}>
-              Last Updated: {new Date(course.updatedAt).toLocaleDateString()}
-            </Text>
+          <View style={styles.metadataCard}>
+            <View style={styles.metadataRow}>
+              <View style={styles.metadataIconContainer}>
+                <Ionicons name="calendar-outline" size={18} color="#6C5CE7" />
+              </View>
+              <View>
+                <Text style={styles.metadataLabel}>Date de création</Text>
+                <Text style={styles.metadataText}>
+                  {new Date(course.createdAt).toLocaleDateString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.metadataRow}>
+              <View style={styles.metadataIconContainer}>
+                <Ionicons name="time-outline" size={18} color="#FFA502" />
+              </View>
+              <View>
+                <Text style={styles.metadataLabel}>Dernière modification</Text>
+                <Text style={styles.metadataText}>
+                  {new Date(course.updatedAt).toLocaleDateString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -224,124 +279,205 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
   },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#636E72',
+    fontWeight: '600',
+  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    padding: 20,
+    padding: 40,
   },
-  errorText: {
-    fontSize: 18,
-    color: '#999',
-    marginTop: 16,
+  errorIconContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FFF0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
   },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#636E72',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+  },
   backButton: {
-    backgroundColor: '#5B43D5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#6C5CE7',
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 25,
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   backButtonText: {
     color: '#FFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 16,
+    backgroundColor: '#6C5CE7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backBtn: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   editBtn: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: 20,
+  },
+  heroSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 28,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  courseIconLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F0EBFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  courseName: {
+    fontSize: Math.min(width * 0.06, 26),
+    fontWeight: '800',
+    color: '#2D3436',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 32,
+  },
+  circularProgressLarge: {
+    alignItems: 'center',
+  },
+  progressCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F0EBFF',
+    borderWidth: 8,
+    borderColor: '#6C5CE7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressPercentage: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#6C5CE7',
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: '#636E72',
+    fontWeight: '600',
+    marginTop: 2,
   },
   section: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  sectionIconHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  courseName: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#333',
+    color: '#2D3436',
+    letterSpacing: 0.3,
   },
   descriptionText: {
     fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
+    color: '#636E72',
+    lineHeight: 26,
   },
-  progressContainer: {
+  nextLessonCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#5B43D5',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#5B43D5',
-    minWidth: 50,
-    textAlign: 'right',
+    backgroundColor: '#FFF9F0',
+    padding: 16,
+    borderRadius: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFA502',
   },
   nextLessonText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: '#2D3436',
+    fontWeight: '600',
+    flex: 1,
   },
   teacherCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 16,
   },
   teacherIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#F0EBFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -350,28 +486,69 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   teacherName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 6,
+  },
+  teacherEmailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   teacherEmail: {
     fontSize: 14,
-    color: '#666',
+    color: '#636E72',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  studentBadge: {
+    backgroundColor: '#F0EBFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    minWidth: 36,
+    alignItems: 'center',
+  },
+  studentBadgeText: {
+    color: '#6C5CE7',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  manageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#F0EBFF',
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  manageButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6C5CE7',
   },
   studentCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
+    gap: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
   studentIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F8F9FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -379,58 +556,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   studentName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 2,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2D3436',
+    marginBottom: 4,
   },
   studentEmail: {
     fontSize: 13,
-    color: '#999',
-  },
-  metadataRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  metadataText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  manageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#F0EBFF',
-    borderRadius: 8,
-  },
-  manageButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#5B43D5',
+    color: '#636E72',
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 12,
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    gap: 6,
+    paddingVertical: 14,
+    marginTop: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
   },
   viewAllText: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#6C5CE7',
+  },
+  metadataCard: {
+    gap: 16,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+  },
+  metadataIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  metadataLabel: {
+    fontSize: 13,
+    color: '#636E72',
+    marginBottom: 4,
     fontWeight: '600',
-    color: '#5B43D5',
+  },
+  metadataText: {
+    fontSize: 15,
+    color: '#2D3436',
+    fontWeight: '500',
   },
 });

@@ -9,7 +9,10 @@ import {
   RefreshControl,
   ActivityIndicator,
   TextInput,
+  Dimensions,
 } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,8 +44,11 @@ export default function ResourcesList() {
 
   const loadUserRole = async () => {
     try {
-      const role = await AsyncStorage.getItem('userRole');
-      setUserRole(role);
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.role);
+      }
     } catch (error) {
       console.error('Error loading user role:', error);
     }
@@ -127,14 +133,7 @@ export default function ResourcesList() {
   };
 
   const renderResource = ({ item }) => (
-    <TouchableOpacity
-      style={styles.resourceCard}
-      onPress={() => router.push({
-        pathname: '/(screens)/resources/create',
-        params: { id: item._id }
-      })}
-      activeOpacity={0.7}
-    >
+    <View style={styles.resourceCard}>
       <View style={styles.resourceHeader}>
         <View style={[styles.typeIcon, { backgroundColor: getTypeColor(item.type) }]}>
           <Ionicons name={getTypeIcon(item.type)} size={24} color="#FFF" />
@@ -199,7 +198,7 @@ export default function ResourcesList() {
           </>
         )}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   if (isLoading) {
@@ -224,12 +223,15 @@ export default function ResourcesList() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ressources</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(screens)/resources/create')}
-          style={styles.addButton}
-        >
-          <Ionicons name="add-circle" size={32} color="#5B43D5" />
-        </TouchableOpacity>
+        {userRole !== 'user' && (
+          <TouchableOpacity
+            onPress={() => router.push('/(screens)/resources/create')}
+            style={styles.addButton}
+          >
+            <Ionicons name="add-circle" size={32} color="#5B43D5" />
+          </TouchableOpacity>
+        )}
+        {userRole === 'user' && <View style={{ width: 32 }} />}
       </View>
 
       <View style={styles.searchContainer}>
@@ -297,7 +299,7 @@ export default function ResourcesList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F6FA',
+    backgroundColor: '#F8F9FA',
   },
   centerContainer: {
     flex: 1,
@@ -378,11 +380,16 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   resourceCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    marginHorizontal: 2,
+    shadowColor: '#FFA502',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
   resourceHeader: {
     flexDirection: 'row',

@@ -8,7 +8,10 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,8 +38,11 @@ export default function CalendarList() {
 
   const loadUserRole = async () => {
     try {
-      const role = await AsyncStorage.getItem('userRole');
-      setUserRole(role);
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.role);
+      }
     } catch (error) {
       console.error('Error loading user role:', error);
     }
@@ -138,13 +144,8 @@ export default function CalendarList() {
     const upcoming = isUpcoming(item.debut);
     
     return (
-      <TouchableOpacity
+      <View
         style={[styles.eventCard, !upcoming && styles.pastEvent]}
-        onPress={() => router.push({
-          pathname: '/(screens)/calendar/create',
-          params: { id: item._id }
-        })}
-        activeOpacity={0.7}
       >
         <View style={styles.eventHeader}>
           <View style={[styles.typeIndicator, { backgroundColor: getTypeColor(item.type) }]}>
@@ -209,7 +210,7 @@ export default function CalendarList() {
             </TouchableOpacity>
           </View>
         )}
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -235,12 +236,15 @@ export default function CalendarList() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Calendrier</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(screens)/calendar/create')}
-          style={styles.addButton}
-        >
-          <Ionicons name="add-circle" size={32} color="#5B43D5" />
-        </TouchableOpacity>
+        {userRole !== 'user' && (
+          <TouchableOpacity
+            onPress={() => router.push('/(screens)/calendar/create')}
+            style={styles.addButton}
+          >
+            <Ionicons name="add-circle" size={32} color="#5B43D5" />
+          </TouchableOpacity>
+        )}
+        {userRole === 'user' && <View style={{ width: 32 }} />}
       </View>
 
       <View style={styles.statsContainer}>
@@ -329,7 +333,7 @@ import { ScrollView } from 'react-native';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F6FA',
+    backgroundColor: '#F8F9FA',
   },
   centerContainer: {
     flex: 1,
@@ -365,19 +369,23 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 15,
-    marginTop: 15,
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 20,
   },
   statBox: {
     backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 16,
+    padding: 18,
     alignItems: 'center',
     flex: 1,
-    marginHorizontal: 3,
-    elevation: 2,
+    marginHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   statNumber: {
     fontSize: 22,
@@ -421,11 +429,16 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   eventCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    marginHorizontal: 2,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
   pastEvent: {
     opacity: 0.6,
@@ -447,10 +460,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 5,
+    fontSize: Math.min(width * 0.045, 20),
+    fontWeight: '800',
+    color: '#2D3436',
+    marginBottom: 6,
+    lineHeight: 24,
   },
   eventType: {
     fontSize: 12,

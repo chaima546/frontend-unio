@@ -47,19 +47,19 @@ router.put("/security", protect, updateSecurity);
    🔹 ADMIN ROUTES
    (Require authentication + admin)
 =========================== */
-// Get all users
+// Get all users (Admin only)
 router.get("/", protect, isAdmin, getUsers);
 
-// Get user by ID
+// Get user by ID (Admin only)
 router.get("/:id", protect, isAdmin, getUserById);
 
-// Create user (by admin)
+// Create user (Admin only)
 router.post("/create", protect, isAdmin, createUser);
 
-// Update user (by admin)
+// Update user (Admin only)
 router.put("/:id", protect, isAdmin, updateUser);
 
-// Delete user (by admin)
+// Delete user (Admin only)
 router.delete("/:id", protect, isAdmin, deleteUser);
 
 export default router;

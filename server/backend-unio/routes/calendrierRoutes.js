@@ -4,10 +4,13 @@ import { createEvent, getAllEvents, getEventById, updateEvent, deleteEvent } fro
 
 const router = express.Router();
 
-router.post("/", protect, createEvent);         // Prof/Admin
-router.get("/", protect, getAllEvents);         // Tous - Get all events
-router.get("/:id", protect, getEventById);      // Tous - Get one event by ID
-router.put("/:id", protect, updateEvent);       // Prof/Admin ou créateur
-router.delete("/:id", protect, deleteEvent);    // Prof/Admin ou créateur
+// Student routes (Read-only access)
+router.get("/", protect, getAllEvents);         // All users can view events
+router.get("/:id", protect, getEventById);      // All users can view event details
+
+// Prof/Admin routes only (Students cannot create/update/delete)
+router.post("/", protect, createEvent);         // Prof/Admin only
+router.put("/:id", protect, updateEvent);       // Prof/Admin only
+router.delete("/:id", protect, deleteEvent);    // Prof/Admin only
 
 export default router;

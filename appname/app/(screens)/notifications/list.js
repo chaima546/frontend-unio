@@ -8,7 +8,10 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,8 +37,11 @@ export default function NotificationsList() {
 
   const loadUserRole = async () => {
     try {
-      const role = await AsyncStorage.getItem('userRole');
-      setUserRole(role);
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.role);
+      }
     } catch (error) {
       console.error('Error loading user role:', error);
     }
@@ -232,12 +238,15 @@ export default function NotificationsList() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(screens)/notifications/create')}
-          style={styles.addButton}
-        >
-          <Ionicons name="add-circle" size={32} color="#5B43D5" />
-        </TouchableOpacity>
+        {userRole !== 'user' && (
+          <TouchableOpacity
+            onPress={() => router.push('/(screens)/notifications/create')}
+            style={styles.addButton}
+          >
+            <Ionicons name="add-circle" size={32} color="#5B43D5" />
+          </TouchableOpacity>
+        )}
+        {userRole === 'user' && <View style={{ width: 32 }} />}
       </View>
 
       <View style={styles.statsContainer}>
@@ -280,7 +289,7 @@ export default function NotificationsList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F6FA',
+    backgroundColor: '#F8F9FA',
   },
   centerContainer: {
     flex: 1,
@@ -298,21 +307,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingTop: 50,
+    paddingBottom: 15,
+    backgroundColor: '#26DE81',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
-    padding: 5,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2C3E50',
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   addButton: {
-    padding: 5,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -344,10 +361,14 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   notificationCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
     elevation: 3,
   },
   unreadCard: {

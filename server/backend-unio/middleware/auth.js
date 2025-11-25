@@ -24,6 +24,18 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log("Decoded token:", decoded);
 
+    // Handle special admin fixed ID
+    if (decoded.id === "admin-fixed-id") {
+      req.user = {
+        _id: "admin-fixed-id",
+        email: "admin@admin.com",
+        role: "admin",
+        isAdmin: true,
+        username: "Super Admin"
+      };
+      return next();
+    }
+
     // Récupère l'utilisateur depuis la DB (token uses 'id' not 'userId')
     req.user = await User.findById(decoded.id).select('-password');
 

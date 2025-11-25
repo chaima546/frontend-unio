@@ -31,9 +31,20 @@ const ProfHomeScreen = () => {
     try {
       const userData = await AsyncStorage.getItem('unistudious_user_data');
       if (userData) {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        // Redirect students to their dashboard
+        if (parsedUser.role === 'user') {
+          router.replace('/(tabs)/home');
+          return;
+        }
+        // Only allow professors
+        if (parsedUser.role !== 'prof') {
+          router.replace('/(auth)/studentLogin');
+          return;
+        }
+        setUser(parsedUser);
       } else {
-        router.replace('/(auth)/profLogin');
+        router.replace('/(auth)/studentLogin');
       }
     } catch (error) {
       console.error('Error loading user data:', error);
