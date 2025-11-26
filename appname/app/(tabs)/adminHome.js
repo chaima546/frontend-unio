@@ -154,9 +154,17 @@ const AdminHomeScreen = () => {
             <Text style={styles.userName}>Administrateur</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#DC143C" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            onPress={() => router.push('/(screens)/profile')} 
+            style={styles.profileButton}
+          >
+            <Ionicons name="person-circle-outline" size={28} color="#DC143C" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#DC143C" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* System Stats */}
@@ -369,6 +377,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#DC143C',
     marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  profileButton: {
+    padding: 10,
   },
   logoutButton: {
     padding: 10,

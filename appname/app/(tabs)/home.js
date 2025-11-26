@@ -177,9 +177,17 @@ const StudentHomeScreen = () => {
                   <Text style={styles.userLevel}>{user?.niveauScolaire} {user?.section || ''}</Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                <Ionicons name="log-out-outline" size={26} color="#FFFFFF" />
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity 
+                  onPress={() => router.push('/(screens)/profile')} 
+                  style={styles.profileButton}
+                >
+                  <Ionicons name="person-circle-outline" size={30} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                  <Ionicons name="log-out-outline" size={26} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Stats Cards */}
@@ -273,7 +281,9 @@ const StudentHomeScreen = () => {
                     <View style={styles.courseInfo}>
                       <Text style={styles.courseTitle} numberOfLines={1}>{course.name}</Text>
                       <Text style={styles.courseProf} numberOfLines={1}>
-                        {course.teacher?.firstName} {course.teacher?.lastName}
+                        <Ionicons name="person" size={12} color="#636E72" />
+                        {' '}{course.teacher?.firstName} {course.teacher?.lastName}
+                        {course.teacher?.speciality && ` • ${course.teacher.speciality}`}
                       </Text>
                       <View style={styles.progressContainer}>
                         <View style={styles.progressBar}>
@@ -392,8 +402,11 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 25,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  profileButton: {
+    padding: 4,
   },
   greeting: {
     fontSize: 16,
@@ -422,6 +435,15 @@ const styles = StyleSheet.create({
     color: '#6C5CE7',
     fontWeight: '700',
     marginLeft: 6,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  profileButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
   logoutButton: {
     padding: 8,

@@ -16,6 +16,21 @@ import { getCourseByIdApi } from '../../../services/api';
 
 const { width } = Dimensions.get('window');
 
+const formatDate = (dateString) => {
+  if (!dateString) return 'Non disponible';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Non disponible';
+    return date.toLocaleDateString('fr-FR', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  } catch (error) {
+    return 'Non disponible';
+  }
+};
+
 export default function CourseDetails() {
   const router = useRouter();
   const { courseId } = useLocalSearchParams();
@@ -44,10 +59,11 @@ export default function CourseDetails() {
     try {
       setIsLoading(true);
       const data = await getCourseByIdApi(courseId);
+      console.log('Course data loaded:', data);
       setCourse(data);
     } catch (error) {
       console.error('Error loading course details:', error);
-      Alert.alert('Error', 'Failed to load course details');
+      Alert.alert('Erreur', 'Impossible de charger les détails du cours');
     } finally {
       setIsLoading(false);
     }
@@ -165,6 +181,12 @@ export default function CourseDetails() {
                 <Text style={styles.teacherName}>
                   {course.teacher.firstName} {course.teacher.lastName}
                 </Text>
+                {course.teacher.speciality && (
+                  <View style={styles.teacherSpecialityRow}>
+                    <Ionicons name="school" size={14} color="#6C5CE7" />
+                    <Text style={styles.teacherSpeciality}>{course.teacher.speciality}</Text>
+                  </View>
+                )}
                 <View style={styles.teacherEmailRow}>
                   <Ionicons name="mail" size={14} color="#636E72" />
                   <Text style={styles.teacherEmail}>{course.teacher.email}</Text>
@@ -216,9 +238,9 @@ export default function CourseDetails() {
                 onPress={handleManageStudents}
               >
                 <Text style={styles.viewAllText}>
-                  View all {course.students.length} students
+                  Voir tous les {course.students.length} étudiants
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color="#5B43D5" />
+                <Ionicons name="chevron-forward" size={16} color="#6C5CE7" />
               </TouchableOpacity>
             )}
           </View>
@@ -238,11 +260,7 @@ export default function CourseDetails() {
               <View>
                 <Text style={styles.metadataLabel}>Date de création</Text>
                 <Text style={styles.metadataText}>
-                  {new Date(course.createdAt).toLocaleDateString('fr-FR', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
+                  {formatDate(course.createdAt)}
                 </Text>
               </View>
             </View>
@@ -253,11 +271,7 @@ export default function CourseDetails() {
               <View>
                 <Text style={styles.metadataLabel}>Dernière modification</Text>
                 <Text style={styles.metadataText}>
-                  {new Date(course.updatedAt).toLocaleDateString('fr-FR', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
+                  {formatDate(course.updatedAt)}
                 </Text>
               </View>
             </View>
@@ -490,6 +504,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2D3436',
     marginBottom: 6,
+  },
+  teacherSpecialityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  teacherSpeciality: {
+    fontSize: 14,
+    color: '#6C5CE7',
+    fontWeight: '600',
   },
   teacherEmailRow: {
     flexDirection: 'row',

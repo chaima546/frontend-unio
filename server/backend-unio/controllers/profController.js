@@ -3,9 +3,9 @@ import User from "../models/UserModel.js";
 // ✅ Inscription professeur
 export const registerProf = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, speciality } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !speciality) {
       return res.status(400).json({ message: "Veuillez remplir tous les champs" });
     }
 
@@ -25,6 +25,7 @@ export const registerProf = async (req, res) => {
       email,
       password, // Le hachage est géré par le middleware 'pre save' du modèle
       role: "prof",
+      speciality,
     });
 
     await newProf.save();
@@ -41,6 +42,7 @@ export const registerProf = async (req, res) => {
         lastName: newProf.lastName,
         email: newProf.email,
         role: newProf.role,
+        speciality: newProf.speciality,
       },
     });
   } catch (error) {
@@ -80,6 +82,7 @@ export const authProf = async (req, res) => {
         lastName: prof.lastName,
         email: prof.email,
         role: prof.role,
+        speciality: prof.speciality,
       },
     });
   } catch (error) {

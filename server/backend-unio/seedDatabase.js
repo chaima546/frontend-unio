@@ -119,7 +119,8 @@ const mockProfs = [
     username: 'khaled.salah',
     email: 'khaled.salah@prof.tn',
     password: 'prof123',
-    role: 'prof'
+    role: 'prof',
+    speciality: 'Physique'
   },
   {
     firstName: 'Prof. Samira',
@@ -127,7 +128,8 @@ const mockProfs = [
     username: 'samira.kacem',
     email: 'samira.kacem@prof.tn',
     password: 'prof123',
-    role: 'prof'
+    role: 'prof',
+    speciality: 'Mathématiques'
   },
   {
     firstName: 'Dr. Nabil',
@@ -135,7 +137,8 @@ const mockProfs = [
     username: 'nabil.zaied',
     email: 'nabil.zaied@prof.tn',
     password: 'prof123',
-    role: 'prof'
+    role: 'prof',
+    speciality: 'Informatique'
   },
   {
     firstName: 'Prof. Hana',
@@ -143,7 +146,8 @@ const mockProfs = [
     username: 'hana.mejri',
     email: 'hana.mejri@prof.tn',
     password: 'prof123',
-    role: 'prof'
+    role: 'prof',
+    speciality: 'Français'
   },
   {
     firstName: 'Dr. Tarek',
@@ -151,7 +155,8 @@ const mockProfs = [
     username: 'tarek.sfar',
     email: 'tarek.sfar@prof.tn',
     password: 'prof123',
-    role: 'prof'
+    role: 'prof',
+    speciality: 'Économie'
   }
 ];
 

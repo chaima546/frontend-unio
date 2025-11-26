@@ -56,11 +56,11 @@ export const getCourseById = async (req, res) => {
 
     // Check access permissions
     const isAdmin = req.user.role === "admin" || req.user.isAdmin;
-    const isTeacher = req.user.role === "prof" && course.teacher.toString() === req.user._id.toString();
+    const isTeacher = req.user.role === "prof" && course.teacher && course.teacher._id.toString() === req.user._id.toString();
     const isStudent = course.students.some(student => student._id.toString() === req.user._id.toString());
 
     if (!isAdmin && !isTeacher && !isStudent) {
-      return res.status(403).json({ code: 403, message: "Accès refusé" });
+      return res.status(403).json({ code: 403, message: "Accès refusé - Vous n'êtes ni admin, ni enseignant, ni étudiant de ce cours" });
     }
 
     res.json({ code: 200, message: "Cours récupéré", course });

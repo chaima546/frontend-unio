@@ -113,9 +113,17 @@ const ProfHomeScreen = () => {
           <Text style={styles.greeting}>Bonjour, Professeur</Text>
           <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#FF6B35" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            onPress={() => router.push('/(screens)/profile')} 
+            style={styles.profileButton}
+          >
+            <Ionicons name="person-circle-outline" size={28} color="#FF6B35" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#FF6B35" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Stats Cards */}
@@ -298,6 +306,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
     marginTop: 5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  profileButton: {
+    padding: 10,
   },
   logoutButton: {
     padding: 10,

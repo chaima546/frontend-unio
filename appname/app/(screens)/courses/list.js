@@ -186,6 +186,7 @@ const CoursesListScreen = () => {
                       <Ionicons name="person" size={16} color="#FFA502" />
                       <Text style={styles.statText}>
                         {course.teacher?.firstName || 'Prof'} {course.teacher?.lastName || ''}
+                        {course.teacher?.speciality && ` • ${course.teacher.speciality}`}
                       </Text>
                     </View>
                   </View>

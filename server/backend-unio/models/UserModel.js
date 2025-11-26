@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, select: false },
 
   // Rôle de l'utilisateur
-  role: { type: String, enum: ["user", "prof", "admin"], default: "prof" },
+  role: { type: String, enum: ["user", "prof", "admin"], default: "user" },
 
 // ✅ Champs spécifiques aux étudiants (role = "user")
 niveauScolaire: {
@@ -42,6 +42,31 @@ section: {
   default: function() {
     // 👉 Si c'est 1ère, pas de section par défaut
     return this.niveauScolaire === "1ère" ? null : "Sciences";
+  }
+},
+
+// ✅ Champ spécifique aux professeurs (role = "prof")
+speciality: {
+  type: String,
+  enum: [
+    "Mathématiques",
+    "Physique",
+    "Chimie",
+    "Biologie",
+    "Informatique",
+    "Français",
+    "Anglais",
+    "Arabe",
+    "Histoire",
+    "Géographie",
+    "Économie",
+    "Philosophie",
+    "Sport",
+    "Arts",
+    "Musique"
+  ],
+  required: function() {
+    return this.role === 'prof';
   }
 },
 

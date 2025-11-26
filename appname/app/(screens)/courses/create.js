@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createCourseApi,
   updateCourseApi,
@@ -26,10 +27,13 @@ const CreateEditCourseScreen = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   // Form data
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [section, setSection] = useState('');
   const [teacher, setTeacher] = useState('');
   const [progress, setProgress] = useState('0');
   const [nextLesson, setNextLesson] = useState('');
@@ -45,9 +49,25 @@ const CreateEditCourseScreen = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load professors
-      const profsData = await getAllProfsApi();
-      setProfessors(profsData.profs || profsData || []);
+      // Load current user
+      const userData = await AsyncStorage.getItem('unistudious_user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setCurrentUser(user);
+        setUserRole(user.role);
+        
+        // If user is prof and creating new course, auto-assign as teacher
+        if (user.role === 'prof' && !isEdit) {
+          setTeacher(user._id);
+        }
+      }
+
+      // Load professors only if admin
+      const role = currentUser?.role || JSON.parse(userData || '{}').role;
+      if (role === 'admin') {
+        const profsData = await getAllProfsApi();
+        setProfessors(profsData.profs || profsData || []);
+      }
 
       // Load course data if editing
       if (isEdit) {
@@ -55,6 +75,7 @@ const CreateEditCourseScreen = () => {
         const course = courseData.course || courseData;
         setName(course.name || '');
         setDescription(course.description || '');
+        setSection(course.section || '');
         setTeacher(course.teacher?._id || course.teacher || '');
         setProgress(String(course.progress || 0));
         setNextLesson(course.nextLesson || '');
@@ -90,6 +111,7 @@ const CreateEditCourseScreen = () => {
       const courseData = {
         name: name.trim(),
         description: description.trim(),
+        section: section.trim(),
         teacher,
         progress: progressNum,
         nextLesson: nextLesson.trim(),
@@ -174,7 +196,20 @@ const CreateEditCourseScreen = () => {
           />
         </View>
 
-        {/* Professor Picker */}
+        {/* Section */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Section</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Sciences, Informatique, Mathématiques..."
+            value={section}
+            onChangeText={setSection}
+            editable={!isSaving}
+          />
+        </View>
+
+        {/* Professor Picker - Only for Admin */}
+        {userRole === 'admin' && (
         <View style={styles.formGroup}>
           <Text style={styles.label}>Professeur *</Text>
           <TouchableOpacity
@@ -184,9 +219,12 @@ const CreateEditCourseScreen = () => {
           >
             <Text style={styles.pickerText}>
               {teacher
-                ? professors.find((p) => p._id === teacher)?.firstName +
-                  ' ' +
-                  professors.find((p) => p._id === teacher)?.lastName
+                ? (() => {
+                    const prof = professors.find((p) => p._id === teacher);
+                    return prof 
+                      ? `${prof.firstName} ${prof.lastName}${prof.speciality ? ` • ${prof.speciality}` : ''}`
+                      : 'Sélectionner un professeur';
+                  })()
                 : 'Sélectionner un professeur'}
             </Text>
             <Ionicons name="chevron-down" size={20} color="#666" />
@@ -203,17 +241,32 @@ const CreateEditCourseScreen = () => {
                     setShowProfPicker(false);
                   }}
                 >
-                  <Text style={styles.pickerOptionText}>
-                    {prof.firstName} {prof.lastName}
-                  </Text>
-                  <Text style={styles.pickerOptionSubtext}>
-                    {prof.department} - {prof.speciality}
-                  </Text>
+                  <View>
+                    <Text style={styles.pickerOptionText}>
+                      {prof.firstName} {prof.lastName}
+                    </Text>
+                    <View style={styles.pickerSubtextRow}>
+                      {prof.speciality && (
+                        <>
+                          <Ionicons name="school" size={12} color="#6C5CE7" />
+                          <Text style={styles.pickerOptionSubtext}>
+                            {prof.speciality}
+                          </Text>
+                          <Text style={styles.pickerDivider}> • </Text>
+                        </>
+                      )}
+                      <Ionicons name="mail" size={12} color="#636E72" />
+                      <Text style={styles.pickerOptionSubtext}>
+                        {prof.email}
+                      </Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
           )}
         </View>
+        )}
 
         {/* Progress */}
         <View style={styles.formGroup}>
@@ -281,17 +334,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 50,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#6C5CE7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
-    padding: 5,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   content: {
     flex: 1,
@@ -350,22 +409,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
+  pickerSubtextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+    flexWrap: 'wrap',
+  },
   pickerOptionSubtext: {
     fontSize: 13,
     color: '#666',
-    marginTop: 2,
+  },
+  pickerDivider: {
+    fontSize: 13,
+    color: '#999',
   },
   saveButton: {
-    backgroundColor: '#5B43D5',
+    backgroundColor: '#6C5CE7',
     padding: 18,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   saveButtonDisabled: {
-    backgroundColor: '#A092D8',
+    backgroundColor: '#A29BFE',
   },
   saveButtonText: {
     color: '#FFFFFF',
