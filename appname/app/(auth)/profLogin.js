@@ -148,6 +148,13 @@ const ProfLoginScreen = () => {
         >
           <Text style={styles.secondaryButtonText}>Connexion Étudiant</Text>
         </TouchableOpacity>
+
+        {/* Lien vers l'inscription professeur */}
+        <TouchableOpacity onPress={() => router.push('/(auth)/profRegister')} style={{ marginTop: 16 }}>
+          <Text style={{ color: '#FFA502', textDecorationLine: 'underline', fontSize: 16, textAlign: 'center' }}>
+            S'inscrire comme professeur
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
